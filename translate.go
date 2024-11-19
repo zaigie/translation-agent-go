@@ -2,6 +2,7 @@ package internal
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 )
 
@@ -41,7 +42,10 @@ func (agent *TranslateAgent) Translate(sourceLang string, targetLang string, sou
 			return ""
 		}
 		translationChunks := agent.multiChunkTranslateText(sourceLang, targetLang, textChunks, country)
-		return strings.Join(translationChunks, "")
+		for i := range translationChunks {
+			translationChunks[i] = removeWrappingTags(translationChunks[i])
+		}
+		return strings.Trim(strings.Join(translationChunks, ""), "\n")
 	}
 }
 
@@ -160,7 +164,7 @@ func (agent *TranslateAgent) multiChunkInitialTranslation(sourceLang string, tar
 		})
 		if err != nil {
 			fmt.Printf("Error rendering initial translation system message: %v\n", err)
-			return nil
+			return []string{}
 		}
 		translationPrompt, err := renderTemplate(multiChunkInitialTranslationPrompt, map[string]interface{}{
 			"sourceLang":       sourceLang,
@@ -170,12 +174,12 @@ func (agent *TranslateAgent) multiChunkInitialTranslation(sourceLang string, tar
 		})
 		if err != nil {
 			fmt.Printf("Error rendering initial translation prompt: %v\n", err)
-			return nil
+			return []string{}
 		}
 		translation, err := agent.getCompletion(translationPrompt, systemMessage)
 		if err != nil {
 			fmt.Printf("Error getting initial translation: %v\n", err)
-			return nil
+			return []string{}
 		}
 		translationChunks[i] = translation
 	}
@@ -192,7 +196,7 @@ func (agent *TranslateAgent) multiChunkReflectOnTranslation(sourceLang string, t
 		})
 		if err != nil {
 			fmt.Printf("Error rendering reflection system message: %v\n", err)
-			return nil
+			return []string{}
 		}
 		if country == "" {
 			reflectionPrompt, err := renderTemplate(multiChunkReflectionPrompt, map[string]interface{}{
@@ -204,12 +208,12 @@ func (agent *TranslateAgent) multiChunkReflectOnTranslation(sourceLang string, t
 			})
 			if err != nil {
 				fmt.Printf("Error rendering reflection prompt: %v\n", err)
-				return nil
+				return []string{}
 			}
 			reflection, err := agent.getCompletion(reflectionPrompt, systemMessage)
 			if err != nil {
 				fmt.Printf("Error getting reflection: %v\n", err)
-				return nil
+				return []string{}
 			}
 			reflectionChunks[i] = reflection
 		} else {
@@ -223,12 +227,12 @@ func (agent *TranslateAgent) multiChunkReflectOnTranslation(sourceLang string, t
 			})
 			if err != nil {
 				fmt.Printf("Error rendering reflection prompt: %v\n", err)
-				return nil
+				return []string{}
 			}
 			reflection, err := agent.getCompletion(reflectionPrompt, systemMessage)
 			if err != nil {
 				fmt.Printf("Error getting reflection: %v\n", err)
-				return nil
+				return []string{}
 			}
 			reflectionChunks[i] = reflection
 		}
@@ -246,7 +250,7 @@ func (agent *TranslateAgent) multiChunkImproveTranslation(sourceLang string, tar
 		})
 		if err != nil {
 			fmt.Printf("Error rendering improve translation system message: %v\n", err)
-			return nil
+			return []string{}
 		}
 		improvementPrompt, err := renderTemplate(multiChunkImproveTranslationPrompt, map[string]interface{}{
 			"sourceLang":        sourceLang,
@@ -258,12 +262,12 @@ func (agent *TranslateAgent) multiChunkImproveTranslation(sourceLang string, tar
 		})
 		if err != nil {
 			fmt.Printf("Error rendering improve translation prompt: %v\n", err)
-			return nil
+			return []string{}
 		}
 		translation2, err := agent.getCompletion(improvementPrompt, systemMessage)
 		if err != nil {
 			fmt.Printf("Error getting improved translation: %v\n", err)
-			return nil
+			return []string{}
 		}
 		translation2Chunks[i] = translation2
 	}
@@ -275,4 +279,15 @@ func (agent *TranslateAgent) multiChunkTranslateText(sourceLang string, targetLa
 	reflectionChunks := agent.multiChunkReflectOnTranslation(sourceLang, targetLang, sourceTextChunks, translation1Chunks, country)
 	translation2Chunks := agent.multiChunkImproveTranslation(sourceLang, targetLang, sourceTextChunks, translation1Chunks, reflectionChunks)
 	return translation2Chunks
+}
+
+// removeWrappingTags Used to remove XML tags at the beginning and end
+func removeWrappingTags(input string) string {
+	// Matching forms like <TAG>... Start and end tags of </TAG>. Note that tag names are not captured to fit different tags
+	re := regexp.MustCompile(`(?is)^<([a-zA-Z]+)[^>]*>(.*?)</\s*([a-zA-Z]+)\s*>$`)
+	matches := re.FindStringSubmatch(input)
+	if len(matches) > 3 && strings.EqualFold(matches[1], matches[3]) {
+		return matches[2]
+	}
+	return input
 }
