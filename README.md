@@ -1,6 +1,6 @@
 # Translation Agent Go
 
-A Go language implementation of [andrewyng/translation-agent](https://github.com/andrewyng/translation-agent)
+Go implementation of [andrewyng/translation-agent](https://github.com/andrewyng/translation-agent)
 
 ## Examples
 
