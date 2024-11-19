@@ -7,7 +7,7 @@ import (
 	openai "github.com/sashabaranov/go-openai"
 )
 
-func (agent *TranslateAgent) getCompletion(prompt string, systemMessage string) (string, error) {
+func (agent *TranslationAgent) getCompletion(prompt string, systemMessage string) (string, error) {
 	config := openai.DefaultConfig(agent.ApiKey)
 	config.BaseURL = agent.BaseURL
 	client := openai.NewClientWithConfig(config)

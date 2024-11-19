@@ -14,15 +14,15 @@ type AgentConfig struct {
 	ApiKey      string
 }
 
-type TranslateAgent struct {
+type TranslationAgent struct {
 	AgentConfig
 }
 
-func NewTranslateAgent(config AgentConfig) *TranslateAgent {
-	return &TranslateAgent{config}
+func NewTranslationAgent(config AgentConfig) *TranslationAgent {
+	return &TranslationAgent{config}
 }
 
-func (agent *TranslateAgent) Translate(sourceLang string, targetLang string, sourceText string, country string) string {
+func (agent *TranslationAgent) Translate(sourceLang string, targetLang string, sourceText string, country string) string {
 	// Check if the source text is a single chunk or multiple chunks
 	// If the source text is a single chunk, call the OneChunkTranslateText function
 	// If the source text is multiple chunks, call the MultiChunkTranslateText function
@@ -50,7 +50,7 @@ func (agent *TranslateAgent) Translate(sourceLang string, targetLang string, sou
 }
 
 // one chunk
-func (agent *TranslateAgent) oneChunkInitialTranslation(sourceLang string, targetLang string, sourceText string) string {
+func (agent *TranslationAgent) oneChunkInitialTranslation(sourceLang string, targetLang string, sourceText string) string {
 	systemMessage, err := renderTemplate(oneChunkInitialTranslationSystemMessage, map[string]interface{}{
 		"sourceLang": sourceLang,
 		"targetLang": targetLang,
@@ -76,7 +76,7 @@ func (agent *TranslateAgent) oneChunkInitialTranslation(sourceLang string, targe
 	return translation
 }
 
-func (agent *TranslateAgent) oneChunkReflectOnTranslation(sourceLang string, targetLang string, sourceText string, translation1 string, country string) string {
+func (agent *TranslationAgent) oneChunkReflectOnTranslation(sourceLang string, targetLang string, sourceText string, translation1 string, country string) string {
 	systemMessage, err := renderTemplate(oneChunkReflectionSystemMessage, map[string]interface{}{
 		"sourceLang": sourceLang,
 		"targetLang": targetLang,
@@ -118,7 +118,7 @@ func (agent *TranslateAgent) oneChunkReflectOnTranslation(sourceLang string, tar
 	return reflection
 }
 
-func (agent *TranslateAgent) oneChunkImproveTranslation(sourceLang string, targetLang string, sourceText string, translation1 string, reflection string) string {
+func (agent *TranslationAgent) oneChunkImproveTranslation(sourceLang string, targetLang string, sourceText string, translation1 string, reflection string) string {
 	systemMessage, err := renderTemplate(oneChunkImproveTranslationSystemMessage, map[string]interface{}{
 		"sourceLang": sourceLang,
 		"targetLang": targetLang,
@@ -146,7 +146,7 @@ func (agent *TranslateAgent) oneChunkImproveTranslation(sourceLang string, targe
 	return translation2
 }
 
-func (agent *TranslateAgent) oneChunkTranslateText(sourceLang string, targetLang string, sourceText string, country string) string {
+func (agent *TranslationAgent) oneChunkTranslateText(sourceLang string, targetLang string, sourceText string, country string) string {
 	translation1 := agent.oneChunkInitialTranslation(sourceLang, targetLang, sourceText)
 	reflection := agent.oneChunkReflectOnTranslation(sourceLang, targetLang, sourceText, translation1, country)
 	translation2 := agent.oneChunkImproveTranslation(sourceLang, targetLang, sourceText, translation1, reflection)
@@ -154,7 +154,7 @@ func (agent *TranslateAgent) oneChunkTranslateText(sourceLang string, targetLang
 }
 
 // multi chunk
-func (agent *TranslateAgent) multiChunkInitialTranslation(sourceLang string, targetLang string, sourceTextChunks []string) []string {
+func (agent *TranslationAgent) multiChunkInitialTranslation(sourceLang string, targetLang string, sourceTextChunks []string) []string {
 	translationChunks := make([]string, len(sourceTextChunks))
 	for i := range sourceTextChunks {
 		taggedText := fmt.Sprintf("%s<TRANSLATE_THIS>%s</TRANSLATE_THIS>%s", strings.Join(sourceTextChunks[0:i], ""), sourceTextChunks[i], sourceTextChunks[i+1:])
@@ -186,7 +186,7 @@ func (agent *TranslateAgent) multiChunkInitialTranslation(sourceLang string, tar
 	return translationChunks
 }
 
-func (agent *TranslateAgent) multiChunkReflectOnTranslation(sourceLang string, targetLang string, sourceTextChunks []string, translation1Chunks []string, country string) []string {
+func (agent *TranslationAgent) multiChunkReflectOnTranslation(sourceLang string, targetLang string, sourceTextChunks []string, translation1Chunks []string, country string) []string {
 	reflectionChunks := make([]string, len(sourceTextChunks))
 	for i := range sourceTextChunks {
 		taggedText := fmt.Sprintf("%s<TRANSLATE_THIS>%s</TRANSLATE_THIS>%s", strings.Join(sourceTextChunks[0:i], ""), sourceTextChunks[i], sourceTextChunks[i+1:])
@@ -240,7 +240,7 @@ func (agent *TranslateAgent) multiChunkReflectOnTranslation(sourceLang string, t
 	return reflectionChunks
 }
 
-func (agent *TranslateAgent) multiChunkImproveTranslation(sourceLang string, targetLang string, sourceTextChunks []string, translation1Chunks []string, reflectionChunks []string) []string {
+func (agent *TranslationAgent) multiChunkImproveTranslation(sourceLang string, targetLang string, sourceTextChunks []string, translation1Chunks []string, reflectionChunks []string) []string {
 	translation2Chunks := make([]string, len(sourceTextChunks))
 	for i := range sourceTextChunks {
 		taggedText := fmt.Sprintf("%s<TRANSLATE_THIS>%s</TRANSLATE_THIS>%s", strings.Join(sourceTextChunks[0:i], ""), sourceTextChunks[i], sourceTextChunks[i+1:])
@@ -274,7 +274,7 @@ func (agent *TranslateAgent) multiChunkImproveTranslation(sourceLang string, tar
 	return translation2Chunks
 }
 
-func (agent *TranslateAgent) multiChunkTranslateText(sourceLang string, targetLang string, sourceTextChunks []string, country string) []string {
+func (agent *TranslationAgent) multiChunkTranslateText(sourceLang string, targetLang string, sourceTextChunks []string, country string) []string {
 	translation1Chunks := agent.multiChunkInitialTranslation(sourceLang, targetLang, sourceTextChunks)
 	reflectionChunks := agent.multiChunkReflectOnTranslation(sourceLang, targetLang, sourceTextChunks, translation1Chunks, country)
 	translation2Chunks := agent.multiChunkImproveTranslation(sourceLang, targetLang, sourceTextChunks, translation1Chunks, reflectionChunks)
