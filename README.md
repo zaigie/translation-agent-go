@@ -2,6 +2,12 @@
 
 A Go language implementation of [andrewyng/translation-agent](https://github.com/andrewyng/translation-agent)
 
+## Examples
+
+```bash
+go run cmd/ta/main.go
+```
+
 ## Related module
 
 - [tmc/langchaingo](https://github.com/tmc/langchaingo)
